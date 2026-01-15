@@ -1,0 +1,40 @@
+{
+  "summary": {
+    "_runtime": 509,
+    "_step": 2599,
+    "_timestamp": 1768477731.9494965,
+    "_wandb": {
+      "runtime": 509
+    },
+    "acc_clean_1shot": 0.4609556198120117,
+    "acc_clean_20shot": 0.6943556070327759,
+    "acc_clean_5shot": 0.6114667057991028,
+    "acc_random_1shot": 0.4280000329017639,
+    "acc_random_20shot": 0.6763334274291992,
+    "acc_random_5shot": 0.5863555669784546,
+    "acc_targeted_1shot": 0.26331111788749695,
+    "acc_targeted_20shot": 0.4084666967391968,
+    "acc_targeted_5shot": 0.34513339400291443,
+    "accuracy": 0.6114667057991028,
+    "best_val_acc": 0.6084375,
+    "epoch": 199,
+    "lr": 6.168375916970619e-06,
+    "step": 22597,
+    "train/acc": 1,
+    "train/loss": 0.15473568439483645,
+    "val/acc": 0.594375,
+    "val/loss": 1.7870806074142456
+  },
+  "history_columns": [
+    "step",
+    "_step",
+    "_runtime",
+    "lr",
+    "train/loss",
+    "epoch",
+    "train/acc",
+    "_timestamp",
+    "val/acc",
+    "val/loss"
+  ]
+}

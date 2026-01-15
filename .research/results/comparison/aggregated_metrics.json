@@ -1,0 +1,18 @@
+{
+  "primary_metric": "accuracy",
+  "metrics": {
+    "accuracy": {
+      "comparative-1-resnet18-cifarfs": 0.6114667057991028,
+      "proposed-resnet18-cifarfs": 0.5649999976158142
+    }
+  },
+  "best_proposed": {
+    "run_id": "proposed-resnet18-cifarfs",
+    "value": 0.5649999976158142
+  },
+  "best_baseline": {
+    "run_id": "comparative-1-resnet18-cifarfs",
+    "value": 0.6114667057991028
+  },
+  "gap": -7.599221305526846
+}
