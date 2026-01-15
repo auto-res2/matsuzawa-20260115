@@ -1,0 +1,7 @@
+=== [UV SYNC] Start at Thu Jan 15 11:37:43 UTC 2026 ===
+=== [UV SYNC] Finished successfully at Thu Jan 15 11:37:43 UTC 2026 ===
+=== [TRIAL RUN] Start for comparative-1-resnet18-cifarfs at Thu Jan 15 11:37:43 UTC 2026 ===
+[main] Executing: /workspace/actions-runner/_work/matsuzawa-20260115/matsuzawa-20260115/.venv/bin/python3 -u -m src.train run=comparative-1-resnet18-cifarfs results_dir=/workspace/actions-runner/_work/matsuzawa-20260115/matsuzawa-20260115/.research/results mode=trial
+[train] Completed comparative-1-resnet18-cifarfs – acc_clean_5shot = 0.3413
+=== [TRIAL RUN] PASSED for comparative-1-resnet18-cifarfs at Thu Jan 15 11:38:14 UTC 2026 ===
+
