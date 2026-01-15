@@ -641,5 +641,71 @@
     "experimental_code": "import torch, torch.nn as nn, torch.nn.functional as F\nfrom torchvision.models import resnet18\nclass ACDMModel(nn.Module):\n    def __init__(self, num_classes, λ_var=0.05, λ_rand=0.1, λ_adv=0.3, T=2.):\n        super().__init__()\n        self.backbone = resnet18(num_classes=num_classes)\n        self.λ_var, self.λ_rand, self.λ_adv, self.T = λ_var, λ_rand, λ_adv, T\n    def _features(self, x):\n        m = self.backbone\n        x = m.relu(m.bn1(m.conv1(x)))\n        x = m.maxpool(x)\n        x = m.layer1(x); x = m.layer2(x); x = m.layer3(x); x = m.layer4(x)\n        x = m.avgpool(x)\n        return x.view(x.size(0), -1)\n    def forward(self, x):\n        return self.backbone(x)\n    def loss(self, x, y):\n        h = self._features(x)                # (B,C)\n        B, C = h.size()\n        # variance term\n        mmc = h.abs().mean(0)\n        loss_var = mmc.var(unbiased=False)\n        # random mask\n        p = torch.empty(1, device=x.device).uniform_(0.3, 0.7).item()\n        M_rand = (torch.rand(B, C, device=x.device) > p).float()\n        # adversarial mask (mask top-p channels per sample)\n        k = int(p * C)\n        topk = h.abs().topk(k, dim=1, largest=True).indices\n        M_adv = torch.ones_like(h)\n        M_adv.scatter_(1, topk, 0.)\n        # mixed features (optional)\n        if torch.rand(1).item() < 0.5:\n            perm = torch.randperm(B)\n            α = torch.distributions.Beta(2,2).sample((B,1)).to(x.device)\n            h_mix = α*h + (1-α)*h[perm]\n            y_mix = None  # handled in episode construction\n        # logits\n        logits_clean = self.backbone.fc(h)\n        logits_rand  = self.backbone.fc(h * M_rand)\n        logits_adv   = self.backbone.fc(h * M_adv)\n        loss_ce = F.cross_entropy(logits_clean, y)\n        def kl(p,q):\n            return F.kl_div(F.log_softmax(p/self.T,dim=1),\n                            F.softmax(q/self.T,dim=1),\n                            reduction='batchmean') * (self.T**2)\n        loss = loss_ce + self.λ_var*loss_var + \\\n               self.λ_rand*kl(logits_clean, logits_rand) + \\\n               self.λ_adv *kl(logits_clean, logits_adv)\n        return loss",
     "expected_result": "CIFAR-FS 5-way 5-shot (ResNet-18):\n• Baseline 72.0 ±0.7 %  \n• UCR 74.0 ±0.7 %  \n• CRUM 76.0 ±0.6 %  \n• ACDM 77.5 ±0.6 %  (+1.5 pp vs CRUM)\n1-shot: 50.0→52.5 % (+2.5 pp vs CRUM)\nRobustness (clean→rand drop→targeted drop, Δacc):\n• Baseline 72→54 (−18)→40 (−32)\n• CRUM    76→71 (−5) →60 (−16)\n• ACDM    77.5→74.5 (−3)→71 (−6)  (5× smaller worst-case drop)\nSimilar gaps on miniImageNet and DomainNet-mini.\nTraining adds ≈3 % time, no inference overhead.",
     "expected_conclusion": "ACDM demonstrates that explicitly training for *worst-case* channel failure, not just average-case randomness, yields state-of-the-art robustness and the highest clean few-shot accuracy reported for parameter-free regularisers.  By unifying adversarial channel dropout, random dropout, variance equalisation and channel-mix augmentation in a single, lightweight loss, the method closes a critical gap left by CIM, UCR and CRUM.  Academically, it highlights adversarial hidden-space perturbations as a powerful form of regularisation; practically, it equips on-device models with strong resilience to structured noise and pruning without sacrificing performance or efficiency."
+  },
+  "experimental_design": {
+    "experiment_summary": "Objective: Demonstrate that Adversarial Channel Dropout & Mix (ACDM) yields higher few-shot classification accuracy and dramatically better robustness to worst-case (targeted) channel loss than the strongest published baseline (CRUM).\nTask: 5-way few-shot image classification (1, 5, 20 shots) on CIFAR-FS while evaluating under three test conditions – clean features, random 30 % channel drop, and targeted 30 % drop of the channels with the highest feature magnitudes.\nWorkflow:\n1. Train two ResNet-18 backbones from scratch on the CIFAR-FS meta-training split (64 classes):\n   • Baseline-CRUM – cross-entropy + MMC variance loss + random uniform channel masking (λ_rand).\n   • Proposed ACDM – CRUM losses plus adversarial channel masking, additional KL term and feature MixUp.\n   Both use identical optimiser settings, so any performance gap is attributable to the regulariser.\n2. Meta-test: freeze backbones, train a linear classifier per episode on the support set and record query accuracy.\n3. Robustness test: repeat evaluation after applying channel-drop corruptions to the frozen backbone features.\n4. Compute accuracy, robustness drop and 95 % bootstrap CIs.\nScale considerations: ResNet-18 (≈12 M parameters) fits comfortably in <2 GB GPU memory; with batch size 256 and three forward passes per mini-batch (clean, random, adversarial) peak memory <12 GB. Training 200 epochs on CIFAR-FS (60 k images) takes ≈5 GPU-hours on a single A100, well within the provided gpu-runner resources.",
+    "runner_config": {
+      "runner_label": [
+        "self-hosted",
+        "gpu-runner"
+      ],
+      "description": "NVIDIA A100 or H200, VRAM: 80 GB or more, RAM: 2048 GB or more"
+    },
+    "evaluation_metrics": [
+      {
+        "name": "accuracy",
+        "description": "Correctness criteria: a prediction is correct when the predicted class label exactly matches the ground-truth label for the query image.\nCalculation: accuracy = (number of correct predictions) / (total number of predictions) × 100 % computed over 600 meta-test episodes and averaged across the 1, 5 and 20-shot settings.\nTask appropriateness: few-shot classification is a discrete multi-class task where each query has a single correct label, so accuracy directly measures performance.\nVisualisations: bar chart comparing methods across shot numbers; 95 % CI error bars."
+      },
+      {
+        "name": "worst_case_drop",
+        "description": "Correctness criteria: uses the same per-image correctness definition as accuracy.\nCalculation: worst_case_drop = accuracy_clean − accuracy_targeted_drop (both in percent points).\nTask appropriateness: quantifies robustness loss under the adversarial corruption the hypothesis targets.\nVisualisations: grouped bar chart of clean, random-drop and targeted-drop accuracies; line plot of Δacc."
+      }
+    ],
+    "models_to_use": [
+      "ResNet-18 (11.7 M)"
+    ],
+    "datasets_to_use": [
+      "CIFAR-FS"
+    ],
+    "proposed_method": {
+      "method_name": "Adversarial Channel Dropout & Mix (ACDM)",
+      "description": "Adds adversarial feature-space channel masking, random masking, MMC variance equalisation and channel-mix mixup to standard cross-entropy training, forcing information to spread across channels and conferring robustness to worst-case channel loss.",
+      "training_config": {
+        "learning_rate": 0.1,
+        "batch_size": 256,
+        "epochs": 200,
+        "optimizer": "sgd",
+        "warmup_steps": 0,
+        "weight_decay": 0.0005,
+        "scheduler": "cosine",
+        "seed": 42,
+        "additional_params": "{\"lambda_var\":0.05,\"lambda_rand\":0.1,\"lambda_adv\":0.3,\"temperature\":2,\"p_range\":[0.3,0.7]}"
+      },
+      "optuna_config": {
+        "enabled": false,
+        "n_trials": 0
+      }
+    },
+    "comparative_methods": [
+      {
+        "method_name": "CRUM (Uniform Channel Masking)",
+        "description": "Baseline regulariser that combines MMC variance equalisation with random uniform channel dropout; no adversarial mask or mixup.",
+        "training_config": {
+          "learning_rate": 0.1,
+          "batch_size": 256,
+          "epochs": 200,
+          "optimizer": "sgd",
+          "warmup_steps": 0,
+          "weight_decay": 0.0005,
+          "scheduler": "cosine",
+          "seed": 42,
+          "additional_params": "{\"lambda_var\":0.05,\"lambda_rand\":0.1}"
+        },
+        "optuna_config": {
+          "enabled": false,
+          "n_trials": 0
+        }
+      }
+    ]
   }
 }
