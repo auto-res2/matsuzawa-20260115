@@ -1,0 +1,15 @@
+# -----------------------------------------------------------------------------
+# Global Hydra configuration – accessible to *all* modules/CLI scripts.
+# -----------------------------------------------------------------------------
+
+defaults:
+  - run: proposed-resnet18-cifarfs
+
+results_dir: ./outputs
+mode: full  # full | trial
+
+# -----------------------------------------------------------------------------
+wandb:
+  entity: gengaru617-personal
+  project: 2026-01-15
+  mode: online
