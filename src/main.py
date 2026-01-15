@@ -23,7 +23,7 @@ def _build_cmd(cfg: DictConfig) -> List[str]:
         "-u",
         "-m",
         "src.train",
-        f"run={cfg.run.run_id}",
+        f"run={cfg.run}",
         f"results_dir={cfg.results_dir}",
         f"mode={cfg.mode}",
     ]
