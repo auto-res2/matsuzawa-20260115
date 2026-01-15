@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 defaults:
-  - run: proposed-resnet18-cifarfs
+  - run: comparative-1-resnet18-cifarfs
 
 results_dir: ./outputs
 mode: full  # full | trial
