@@ -50,7 +50,8 @@
 Few-shot learners deployed on edge devices must cope with systematic sensor failures, aggressive pruning and quantisation, all of which selectively erase the most informative feature channels. Existing regularisers such as Channel Importance Modulation or uniform dropout improve average-case robustness but still collapse when the channels with highest saliency are removed. We introduce Adversarial Channel Dropout and Mix (ACDM), the first training procedure that explicitly targets this worst-case scenario while mitigating channel bias under clean conditions. During every mini-batch we (i) mask the $k$ channels with largest activation magnitude to create an adversarial view, (ii) sample an independent random mask with equal sparsity, and (iii) apply a light-weight channel-mix augmentation. A triple Kullback---Leibler consistency loss forces the logits of the two masked views to match the clean prediction, and a mean-magnitude-of-channels variance penalty equalises energy across channels. A single ResNet-18 trained with ACDM on CIFAR-FS attains $77.5\,\% \pm 0.6$ accuracy in the 5-shot regime, surpassing the strongest published parameter-free baseline CRUM by $1.5$ percentage points, and reduces accuracy loss under targeted $30\,\%$ channel drop from $16$ pp to $6$ pp. Training adds $<3\,\%$ compute and incurs no inference overhead. Extensive ablations confirm that adversarial masks, random masks and channel mixing play complementary roles. Results generalise to miniImageNet and DomainNet-mini, establishing ACDM as a practical defence against structured feature corruption in few-shot recognition.
 \end{abstract}
 
-\section{Introduction}\label{sec:intro}
+\section{Introduction}
+\label{sec:intro}
 Few-shot image classification is indispensable when data are scarce, labels expensive or rapid on-device adaptation is required. Modern metric learners and fine-tuning baselines achieve impressive accuracy provided backbone features remain intact~\cite{dhillon-2019-baseline}. Real deployments, however, rarely enjoy such ideal conditions: hardware faults, sensor drift and aggressive model compression manifest as structured loss of feature channels. Recent evidence reveals a persistent form of channel bias---convolutional backbones concentrate discriminative power into a handful of high-energy channels that, once damaged, cause abrupt accuracy collapse~\cite{luo-2022-channel}. Uniform channel dropout (CRUM) tackles average-case erasure but leaves a vulnerability to targeted attacks that disable precisely these dominant channels.
 
 Why is this hard? The worst-case mask is data-dependent and high-dimensional; enumerating it is infeasible. A robust learner must anticipate an adversary that observes the activations and knocks out the most salient channels at test time, yet any regulariser must preserve clean accuracy---a classical adversarial-training dilemma magnified by the data-poor few-shot regime.
@@ -61,17 +62,17 @@ We verify ACDM on three canonical few-shot benchmarks with ResNet-18/50 backbone
 
 \subsection{Key Contributions}
 \begin{itemize}
-  \item \textbf{Formalisation of worst-case channel loss}~--- We analyse why uniform dropout is insufficient for adversarial removal scenarios in few-shot learning.
-  \item \textbf{ACDM regulariser}~--- We introduce the first parameter-free training procedure that explicitly guards against adversarial channel erasure.
-  \item \textbf{Efficient implementation}~--- A reference PyTorch codebase adds $<3\,\%$ computation and zero test-time overhead.
-  \item \textbf{Extensive evaluation}~--- Results on CIFAR-FS, miniImageNet and DomainNet-mini establish state-of-the-art robustness with competitive clean accuracy.
+  \item \textbf{Formalisation of worst-case channel loss}---We analyse why uniform dropout is insufficient for adversarial removal scenarios in few-shot learning.
+  \item \textbf{ACDM regulariser}---We introduce the first parameter-free training procedure that explicitly guards against adversarial channel erasure.
+  \item \textbf{Efficient implementation}---A reference PyTorch codebase adds $<3\,\%$ computation and zero test-time overhead.
+  \item \textbf{Extensive evaluation}---Results on CIFAR-FS, miniImageNet and DomainNet-mini establish state-of-the-art robustness with competitive clean accuracy.
 \end{itemize}
 
 Future work will automate selection of the dropout rate $p$ and extend ACDM to transformer backbones.
 
 \section{Related Work}\label{sec:related}
 \subsection{Channel bias and post-hoc correction}
-The logarithmic rescaling of features proposed by Luo \emph{et al.} suppresses dominant channels at test time and delivers sizeable accuracy gains without retraining~\cite{luo-2022-channel}. While complementary to our goal, it does not address outright channel failure.
+The logarithmic rescaling of features proposed by Luo \emph{et al.}\ suppresses dominant channels at test time and delivers sizeable accuracy gains without retraining~\cite{luo-2022-channel}. While complementary to our goal, it does not address outright channel failure.
 
 \subsection{Uniform dropout regularisers}
 Random channel masking coupled with MMC variance reduction (CRUM) yields balanced representations yet remains vulnerable to worst-case removal because optimisation never confronts adversarial masks. ACDM can be viewed as a strict superset of CRUM that adds adversarially selected masks and channel mixing.
@@ -89,7 +90,7 @@ In summary, no prior work simultaneously targets worst-case channel loss, mainta
 
 \section{Background}\label{sec:background}
 \subsection{Problem Setting}
-Let $h\in\mathbb R^{B\times C}$ denote the pooled penultimate activations of a convolutional backbone for a mini-batch of size $B$ and $C$ channels. During deployment an unknown corruption may zero a subset of channels, modelled by a binary mask $M\in{\{0,1\}}^{C}$. The corrupted features are $\tilde h = h\odot M$. Clean performance should be high when $M = \mathbf 1_{C}$, and robustness requires graceful degradation for any mask with at most $pC$ zeros. In the worst case an adversary chooses $M$ after observing $h$.
+Let $h\in\mathbb R^{B\times C}$ denote the pooled penultimate activations of a convolutional backbone for a mini-batch of size $B$ and $C$ channels. During deployment an unknown corruption may zero a subset of channels, modelled by a binary mask $M\in\{0,1\}^{C}$. The corrupted features are $\tilde h = h\odot M$. Clean performance should be high when $M = \mathbf 1_{C}$, and robustness requires graceful degradation for any mask with at most $pC$ zeros. In the worst case an adversary chooses $M$ after observing~$h$.
 
 \subsection{Channel Bias}
 Large-scale pre-training concentrates energy in a few channels, resulting in high variance of the mean-magnitude-of-channels (MMC). Dropping those channels starves the classifier and causes catastrophic errors. Uniform dropout addresses average sparsity but seldom removes all dominant channels together, leaving the adversarial scenario unresolved.
@@ -136,10 +137,10 @@ Optimisation uses stochastic gradient descent with momentum $0.9$, initial learn
 
 \subsection{Compared Models}
 \begin{itemize}
-  \item \textbf{CE}~--- Baseline cross-entropy training.
-  \item \textbf{UCR}~--- CE plus MMC variance term.
-  \item \textbf{CRUM}~--- UCR augmented with random dropout.
-  \item \textbf{ACDM}~--- Proposed method: CRUM + adversarial dropout + channel mix.
+  \item \textbf{CE}---Baseline cross-entropy training.
+  \item \textbf{UCR}---CE plus MMC variance term.
+  \item \textbf{CRUM}---UCR augmented with random dropout.
+  \item \textbf{ACDM}---Proposed method: CRUM + adversarial dropout + channel mix.
 \end{itemize}
 
 \subsection{Evaluation Protocol}
@@ -219,7 +220,7 @@ ACDM slightly increases MMC variance after prolonged training and under-performs
 \section{Conclusion}\label{sec:conclusion}
 We investigated worst-case channel failure in few-shot learning and introduced Adversarial Channel Dropout and Mix, a parameter-free training-time regulariser that unifies adversarial and random masking, variance equalisation and channel-mix augmentation. ACDM spreads information across channels, cuts worst-case accuracy loss by up to $5\times$ and surpasses the strongest published parameter-free baseline in clean 5-shot accuracy on CIFAR-FS with negligible computational overhead. Because it changes only the loss, the method can be added to any convolutional backbone without increasing inference cost. Future work will explore adaptive selection of the dropout rate, extension to transformer architectures and combination with data-space augmentations for compounded robustness gains.
 
-This work was generated by \textsc{AIRAS} \citep{airas2025}.
+This work was generated by \textsc{AIRAS}~\citep{airas2025}.
 
 \bibliographystyle{iclr2024_conference}
 \bibliography{references}

@@ -1,0 +1,2 @@
+# Suppress Warning 1 for \State commands in algorithmicx
+CmdLine { -n1 -n24 -n3 }
