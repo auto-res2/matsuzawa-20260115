@@ -7,13 +7,14 @@ authors = [
 ]
 requires-python = ">=3.10"
 
-[project.dependencies]
-torch = "^2.1"
-torchvision = "^0.16"
-wandb = "^0.15"
-hydra-core = "^1.3"
-omegaconf = "^2.3"
-optuna = "^3.5"
-seaborn = "^0.13"
-matplotlib = "^3.8"
-pandas = "^2.1"
+dependencies = [
+  "torch>=2.1",
+  "torchvision>=0.16",
+  "wandb>=0.15",
+  "hydra-core>=1.3",
+  "omegaconf>=2.3",
+  "optuna>=3.5",
+  "seaborn>=0.13",
+  "matplotlib>=3.8",
+  "pandas>=2.1",
+]
