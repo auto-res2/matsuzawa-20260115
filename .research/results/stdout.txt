@@ -12,3 +12,10 @@
 [train] Completed proposed-resnet18-cifarfs – acc_clean_5shot = 0.3653
 === [TRIAL RUN] PASSED for proposed-resnet18-cifarfs at Thu Jan 15 11:39:21 UTC 2026 ===
 
+=== [UV SYNC] Start at Thu Jan 15 11:40:08 UTC 2026 ===
+=== [UV SYNC] Finished successfully at Thu Jan 15 11:40:09 UTC 2026 ===
+=== [FULL EXPERIMENT] Start for comparative-1-resnet18-cifarfs at Thu Jan 15 11:40:09 UTC 2026 ===
+[main] Executing: /workspace/actions-runner/_work/matsuzawa-20260115/matsuzawa-20260115/.venv/bin/python3 -u -m src.train run=comparative-1-resnet18-cifarfs results_dir=/workspace/actions-runner/_work/matsuzawa-20260115/matsuzawa-20260115/.research/results mode=full
+[train] WandB URL: https://wandb.ai/gengaru617-personal/2026-01-15/runs/comparative-1-resnet18-cifarfs
+[train] Completed comparative-1-resnet18-cifarfs – acc_clean_5shot = 0.6115
+=== [FULL EXPERIMENT] PASSED for comparative-1-resnet18-cifarfs at Thu Jan 15 11:49:10 UTC 2026 ===
