@@ -198,7 +198,12 @@ def main(cfg: DictConfig):  # pragma: no cover
     if cfg.mode not in {"trial", "full"}:
         raise ValueError("mode must be 'trial' or 'full'")
 
-    cfg_run: DictConfig = cfg.run  # alias
+    # Handle case where cfg.run is a string (from command-line override)
+    if isinstance(cfg.run, str):
+        run_config_path = Path(get_original_cwd()) / "config" / "runs" / f"{cfg.run}.yaml"
+        cfg_run: DictConfig = OmegaConf.load(run_config_path)
+    else:
+        cfg_run: DictConfig = cfg.run  # alias
 
     # Automatically adapt settings for *trial* mode -------------------------
     if cfg.mode == "trial":
