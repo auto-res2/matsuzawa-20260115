@@ -46,6 +46,22 @@ def _build_transforms(cfg_run: DictConfig, train: bool) -> T.Compose:  # noqa: D
 # Factory: train / val loaders -------------------------------------------------
 
 
+class _RemappedDataset(Dataset):
+    """Wraps a dataset and remaps labels to contiguous range [0, n_classes-1]."""
+    def __init__(self, base_dataset, class_to_idx):
+        self.base = base_dataset
+        self.class_to_idx = class_to_idx
+
+    def __len__(self):
+        return len(self.base)
+
+    def __getitem__(self, idx):
+        img, label = self.base[idx]
+        # Remap label to contiguous index
+        new_label = self.class_to_idx[label]
+        return img, new_label
+
+
 def build_train_val_loaders(cfg_run: DictConfig):
     root = Path(".cache") / "datasets" / "cifar100"
     root.mkdir(parents=True, exist_ok=True)
@@ -58,14 +74,20 @@ def build_train_val_loaders(cfg_run: DictConfig):
     )
 
     train_classes, _ = _cifarfs_split()
+    # Create mapping from original class labels to contiguous indices [0, 63]
+    class_to_idx = {cls: idx for idx, cls in enumerate(train_classes)}
+
     idx = [i for i, t in enumerate(ds_full.targets) if t in train_classes]
     ds_sub = Subset(ds_full, idx)
 
+    # Wrap with remapping
+    ds_remapped = _RemappedDataset(ds_sub, class_to_idx)
+
     val_ratio = 0.1
-    val_size = int(len(ds_sub) * val_ratio)
-    train_size = len(ds_sub) - val_size
+    val_size = int(len(ds_remapped) * val_ratio)
+    train_size = len(ds_remapped) - val_size
     gen = torch.Generator().manual_seed(int(cfg_run.training.seed))
-    train_set, val_set = random_split(ds_sub, [train_size, val_size], generator=gen)
+    train_set, val_set = random_split(ds_remapped, [train_size, val_size], generator=gen)
 
     loader_train = DataLoader(
         train_set,
